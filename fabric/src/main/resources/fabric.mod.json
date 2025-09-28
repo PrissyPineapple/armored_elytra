@@ -25,8 +25,9 @@
     "armored_elytra-common.mixins.json"
   ],
   "depends": {
-    "fabric": "*",
-    "minecraft": "${minecraft_version}",
-    "architectury": ">=${architectury_version}"
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": "~1.21.8",
+    "architectury": ">=17.0.8"
   }
 }

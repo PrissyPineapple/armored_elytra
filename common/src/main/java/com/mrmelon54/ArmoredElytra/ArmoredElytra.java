@@ -3,11 +3,13 @@ package com.mrmelon54.ArmoredElytra;
 import com.mrmelon54.ArmoredElytra.models.ArmoredElytraModelProvider;
 import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.event.events.client.ClientTooltipEvent;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
 import dev.architectury.registry.item.ItemPropertiesRegistry;
+import net.fabricmc.fabric.api.client.item.v1.TooltipComponentCallback;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +19,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 
 import java.util.HashMap;
 import java.util.List;
@@ -57,18 +60,23 @@ public class ArmoredElytra {
         // Clear armored elytra mappings when quitting a level
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> armoredElytraMappings.clear());
 
-        ClientTooltipEvent.ITEM.register((stack, lines, flag) -> {
+        TooltipComponentCallback.EVENT.register(data -> {
+            ItemStack stack = data.itemStack();
             ChestplateWithElytraItem item = ChestplateWithElytraItem.fromItemStack(stack);
-            if (item == null) return;
-            if (!item.isArmoredElytra()) return;
+            if (item == null || !item.isArmoredElytra()) {
+                return null;
+            }
+
             ItemStack chestplateItemStack = item.getChestplate();
-            if (chestplateItemStack == null) return;
+            if (chestplateItemStack == null) {
+                return null;
+            }
+
             Minecraft mc = Minecraft.getInstance();
-            List<Component> tooltipLines = chestplateItemStack.getTooltipLines(mc.player, flag);
-            int i = lines.indexOf(CommonComponents.EMPTY);
-            int j = tooltipLines.indexOf(CommonComponents.EMPTY);
-            if (i == -1 || j == -1) return;
-            lines.addAll(i, tooltipLines.subList(1, j));
+            List<Component> tooltipLines = chestplateItemStack.getTooltipLines(mc.player, mc.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
+
+            List<ClientTooltipComponent> components = tooltipLines.stream().map(ClientTooltipComponent::create).toList();
+            return ClientTooltipComponent.create(chestplateItemStack.getTooltipImage().orElse(null), components, List.of(), DefaultTooltipPositioner.INSTANCE);
         });
     }
 
